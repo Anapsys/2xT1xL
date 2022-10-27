@@ -1,16 +1,19 @@
 const fs = require('node:fs');
 const path = require('node:path');
 // Require the necessary discord.js classes
-const { Client, Events, GatewayIntentBits, IntentsBitField } = require('discord.js');
+const { Collection, Client, Events, GatewayIntentBits, IntentsBitField, Partials } = require('discord.js');
 const { token } = require('./config.json');
+const wait = require('node:timers/promises').setTimeout;
 
 const myIntents = new IntentsBitField();
 myIntents.add(IntentsBitField.Flags.Guilds);
 myIntents.add(IntentsBitField.Flags.GuildMembers);
 myIntents.add(IntentsBitField.Flags.GuildMessages);
+myIntents.add(IntentsBitField.Flags.GuildMessageReactions);
 myIntents.add(IntentsBitField.Flags.MessageContent);
+
 // Create a new client instance
-const client = new Client({ intents: myIntents });
+const client = new Client({ intents: myIntents, partials: [Partials.Message, Partials.Channel, Partials.Reaction] });
 
 // command setup
 client.commands = new Collection();
@@ -42,16 +45,18 @@ client.on(Events.InteractionCreate, async interaction => {
 	console.log(interaction);
 
   const command = interaction.client.commands.get(interaction.commandName);
+  const { commandName } = interaction;
 
 	if (!command) {
 		console.error(`No command matching ${interaction.commandName} was found.`);
 		return;
 	}
 
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-	}
+  //execute body
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+  }
 });
