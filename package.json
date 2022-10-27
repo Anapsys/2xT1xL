@@ -1,0 +1,19 @@
+{
+  "name": "2xt1xl",
+  "version": "1.0.0",
+  "description": "a discord bot",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "2xT1xL"
+  },
+  "author": "Anapse",
+  "license": "ISC",
+  "dependencies": {
+    "discord": "^0.8.2",
+    "discord-interactions": "^3.2.0"
+  }
+}
