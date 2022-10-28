@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, messageLink } = require('discord.js');
+const { 
+    SlashCommandBuilder, messageLink, SelectMenuBuilder,
+    ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle 
+} = require('discord.js');
 const { shuffle, myArrayShuffle, setUserReaction } = require('../utils.js');
 const wait = require('node:timers/promises').setTimeout;
 
@@ -8,7 +11,8 @@ module.exports = {
     // the appearance and personality of the function
 	data: new SlashCommandBuilder()
 		.setName('lie')
-		.setDescription('Start a round of two truths one lie!')
+		.setDescription('Start a round of two truths one lie!'),
+        /*
         .addStringOption(option =>
             option
                 .setName('lie')
@@ -24,14 +28,57 @@ module.exports = {
                 .setName('truth_2')
                 .setDescription('truth')
                 .setRequired(true)),
+                */
 
     // the actual behavior of the function
 	async execute(interaction) {
         // game rules
-        const timerSeconds = 5;
+        const timerSeconds = 120;
         const numArgs = interaction.options._hoistedOptions.length;
         console.log(`Starting game with ${timerSeconds} seconds and ${numArgs} statements...`)
         let playerAnswers = new Map();
+
+        // modal
+        const modal = new ModalBuilder()
+			.setCustomId('2T1L_Modal')
+			.setTitle('Two Truths, One Lie');
+
+		// Create the text input components
+        //const inputTimeLimit = new SelectMenuBuilder()
+        //    .setCustomId('inputTime')
+        //    .setLabel("How many seconds for this round?")
+		const inputLie = new TextInputBuilder()
+			.setCustomId('inputLie')
+			.setLabel("Tell a lie... (or very near truth)")
+            //.setPlaceholder('')
+			.setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+        const inputLieJustify = new TextInputBuilder()
+			.setCustomId('inputLieJustify')
+			.setLabel("What about this is wrong? (optional)")
+            //.setPlaceholder(`It's "distant lands".`)
+			.setStyle(TextInputStyle.Short);
+		const inputTruth1 = new TextInputBuilder()
+			.setCustomId('inputTruth1')
+			.setLabel("Now tell an iffy truth!")
+            //.setPlaceholder('Enter some text!')
+			.setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+        const inputTruth2 = new TextInputBuilder()
+			.setCustomId('inputTruth2')
+			.setLabel("...and one more truth.")
+            //.setPlaceholder('Enter some text!')
+			.setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+
+		// An action row only holds one text input,
+		// so you need one action row per text input.
+		const ActionRow1 = new ActionRowBuilder().addComponents(inputLie);
+		const ActionRow2 = new ActionRowBuilder().addComponents(inputLieJustify);
+        const ActionRow3 = new ActionRowBuilder().addComponents(inputTruth1);
+        const ActionRow4 = new ActionRowBuilder().addComponents(inputTruth2);
+        modal.addComponents(ActionRow1, ActionRow2, ActionRow3, ActionRow4);
+        await interaction.showModal(modal);
 
         // statements
         let statements = [...interaction.options._hoistedOptions];
@@ -53,11 +100,12 @@ module.exports = {
         let st_i = 0;
         for(let st of statements) {
             let txt = st.value;
-            msg += numericalEmojis[st_i]+`: ${txt}\n`;
+            msg += numericalEmojis[st_i]+`: *${txt}*\n`;
             st_i++;
         }
-        let timerTxt = `**${timerSeconds}** seconds remaining!\n`;
-		const message = await interaction.reply({content: timerTxt+msg, fetchReply: true });
+        let timerTxt = `⏰**${timerSeconds}** seconds remaining!\n`;
+        let rulesWarning = `*(only your most recent reaction will count)*`;
+		const message = await interaction.reply({content: timerTxt+msg+rulesWarning, fetchReply: true });
 
         // add reactions
         try {
@@ -86,10 +134,10 @@ module.exports = {
         for(let i = 0; i < timerSeconds; i++) {
             await wait(1000);
             //edit timer msg
-            timerTxt = `**${timerSeconds-i}** seconds remaining!\n`;
+            timerTxt = `⏰**${timerSeconds-i}** seconds remaining!\n`;
             await interaction.editReply(timerTxt+msg);
         }
-        timerTxt = `**Time's up!** `;
+        timerTxt = `⏰**Time's up!** `;
         await interaction.editReply(timerTxt+msg);
         
         //complete game
