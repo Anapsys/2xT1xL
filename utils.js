@@ -17,4 +17,11 @@ function myArrayShuffle(array) {
     return arrayCopy;
 }
 
-module.exports = { myArrayShuffle };
+function setUserReaction(map, user, react) {
+    let result = new Map(map);
+    result.set(user, react);
+    console.log(`${user.tag}'s answer set to ${react}`);
+    return result;
+}
+
+module.exports = { myArrayShuffle, setUserReaction };
