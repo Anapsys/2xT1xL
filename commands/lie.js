@@ -2,7 +2,10 @@ const { SlashCommandBuilder, messageLink } = require('discord.js');
 const { shuffle, myArrayShuffle, setUserReaction } = require('../utils.js');
 const wait = require('node:timers/promises').setTimeout;
 
-const numericalEmojis = [`1️⃣`,`2️⃣`,`3️⃣`,`4️⃣`,`5️⃣`,`6️⃣`,`7️⃣`,`8️⃣`,`9️⃣`];
+const numericalEmojis = [`1️⃣`,`2️⃣`,`3️⃣`,`4️⃣`,`5️⃣`,`6️⃣`,`7️⃣`,`8️⃣`,`9️⃣`,];
+const circleEmojis =    [`🔴`,`🟤`,`🟠`,`🟡`,`🟢`,`🔵`,`🟣`,`⚫`,`⚪`,];
+const heartEmojis =     [`❤️`,`🤎`,`🧡`,`💛`,`💚`,`💙`,`💜`,`🖤`,`🤍`,];
+let emojiScheme = numericalEmojis;
 
 module.exports = {
     // the appearance and personality of the function
@@ -28,7 +31,7 @@ module.exports = {
     // the actual behavior of the function
 	async execute(interaction) {
         // game rules
-        const timerSeconds = 5;
+        const timerSeconds = 120;
         const numArgs = interaction.options._hoistedOptions.length;
         console.log(`Starting game with ${timerSeconds} seconds and ${numArgs} statements...`)
         let playerAnswers = new Map();
@@ -45,24 +48,24 @@ module.exports = {
         statements = myArrayShuffle(statements);
         console.log(statements);
         const truthIndex = statements.findIndex(function (entry) { return entry.name === "lie"; });
-        let matchingReaction = numericalEmojis[truthIndex];
+        let matchingReaction = emojiScheme[truthIndex];
         console.log(`truth index: ${truthIndex}`);
 
         // send initial message to start game
-        let msg = `Which of these statements about ${interaction.user} is correct? \n`;
+        let msg = `One of these statements about ${interaction.user} is false! Which one is it? \n`;
         let st_i = 0;
         for(let st of statements) {
             let txt = st.value;
-            msg += numericalEmojis[st_i]+`: ${txt}\n`;
+            msg += emojiScheme[st_i]+`: ${txt}\n`;
             st_i++;
         }
-        let timerTxt = `**${timerSeconds}** seconds remaining!\n`;
+        let timerTxt = `⏰**${timerSeconds}** seconds remaining!\n`;
 		const message = await interaction.reply({content: timerTxt+msg, fetchReply: true });
 
         // add reactions
         try {
             for(let r = 0; r < numArgs; r++) {
-                await message.react(numericalEmojis[r]);
+                await message.react(emojiScheme[r]);
             }
         }
         catch (error) {
@@ -86,10 +89,10 @@ module.exports = {
         for(let i = 0; i < timerSeconds; i++) {
             await wait(1000);
             //edit timer msg
-            timerTxt = `**${timerSeconds-i}** seconds remaining!\n`;
+            timerTxt = `⏰**${timerSeconds-i}** seconds remaining!\n`;
             await interaction.editReply(timerTxt+msg);
         }
-        timerTxt = `**Time's up!** `;
+        timerTxt = `⏰**Time's up!** `;
         await interaction.editReply(timerTxt+msg);
         
         //complete game
