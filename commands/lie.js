@@ -5,6 +5,7 @@ const wait = require('node:timers/promises').setTimeout;
 const numericalEmojis = [`1️⃣`,`2️⃣`,`3️⃣`,`4️⃣`,`5️⃣`,`6️⃣`,`7️⃣`,`8️⃣`,`9️⃣`];
 
 module.exports = {
+    // the appearance and personality of the function
 	data: new SlashCommandBuilder()
 		.setName('lie')
 		.setDescription('Start a round of two truths one lie!')
@@ -23,6 +24,8 @@ module.exports = {
                 .setName('truth_2')
                 .setDescription('truth')
                 .setRequired(true)),
+
+    // the actual behavior of the function
 	async execute(interaction) {
         // game rules
         const timerSeconds = 5;
