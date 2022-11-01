@@ -41,22 +41,24 @@ client.login(token);
 
 // actual execution
 client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
-	console.log(interaction);
+	if (interaction.isChatInputCommand()
+	|| interaction.isModalSubmit()) {
+		console.log(interaction);
 
-  const command = interaction.client.commands.get(interaction.commandName);
-  const { commandName } = interaction;
+		const command = interaction.client.commands.get(interaction.commandName);
+		const { commandName } = interaction;
 
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
+		if (!command) {
+			console.error(`No command matching ${interaction.commandName} was found.`);
+			return;
+		}
+
+		//execute body
+		try {
+			await command.execute(interaction);
+		} catch (error) {
+			console.error(error);
+			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		}
 	}
-
-  //execute body
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-  }
 });

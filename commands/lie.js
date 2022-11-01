@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, messageLink } = require('discord.js');
+const { 
+    SlashCommandBuilder,  messageLink,
+    ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle,
+} = require('discord.js');
 const { shuffle, myArrayShuffle, setUserReaction } = require('../utils.js');
 const wait = require('node:timers/promises').setTimeout;
 
@@ -12,33 +15,78 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('lie')
 		.setDescription('Start a round of two truths one lie!')
-        .addStringOption(option =>
+        .addIntegerOption(option =>
             option
-                .setName('lie')
-                .setDescription('lie')
-                .setRequired(true))
-        .addStringOption(option =>
-            option
-                .setName('truth_1')
-                .setDescription('truth')
-                .setRequired(true))
-        .addStringOption(option =>
-            option
-                .setName('truth_2')
-                .setDescription('truth')
-                .setRequired(true)),
+                .setName(`timelimit`)
+                .setDescription('Time limit (Seconds) (defaults to 2 mins)'))
+        .setDMPermission(true),
 
     // the actual behavior of the function
 	async execute(interaction) {
         // game rules
-        const timerSeconds = 120;
+        const timerSeconds = interaction.options.getInteger('timelimit') ?? 120;
         const numArgs = interaction.options._hoistedOptions.length;
         console.log(`Starting game with ${timerSeconds} seconds and ${numArgs} statements...`)
         let playerAnswers = new Map();
 
+        //await interaction.reply({ content: 'Collecting witness testimony...', ephemeral: true });
+        //await interaction.deferReply();
+
+        // modal
+        const modal = new ModalBuilder()
+        .setCustomId('2T1L_Modal')
+        .setTitle('Two Truths, One Lie');
+
+        // Create the text input components
+        // const inputTimeLimit = new SelectMenuBuilder()
+        //    .setCustomId('inputTime')
+        //    .setLabel("How many seconds for this round?")
+        const input1 = new TextInputBuilder()
+            .setCustomId('inputLie')
+            .setLabel("Tell a lie... (or very near truth)")
+            //.setPlaceholder('')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+        const input2 = new TextInputBuilder()
+            .setCustomId('inputLieJustify')
+            .setLabel("What about this is wrong? (optional)")
+            //.setPlaceholder(`It's "distant lands".`)
+            .setStyle(TextInputStyle.Short);
+        const input3 = new TextInputBuilder()
+            .setCustomId('inputTruth1')
+            .setLabel("Now tell an iffy truth!")
+            //.setPlaceholder('Enter some text!')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+        const input4 = new TextInputBuilder()
+            .setCustomId('inputTruth2')
+            .setLabel("...and one more truth.")
+            //.setPlaceholder('Enter some text!')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true);
+
+        // An action row only holds one text input,
+        // so you need one action row per text input.
+        const ActionRow1 = new ActionRowBuilder().addComponents(input1);
+        const ActionRow2 = new ActionRowBuilder().addComponents(input2);
+        const ActionRow3 = new ActionRowBuilder().addComponents(input3);
+        const ActionRow4 = new ActionRowBuilder().addComponents(input4);
+        modal.addComponents(ActionRow1, ActionRow2, ActionRow3, ActionRow4);
+
+        await interaction.showModal(modal);
+        const modalfilter = (interaction) => interaction.customId === '2T1L_Modal';
+        await interaction.awaitModalSubmit({ modalfilter, time: 15_000 })
+            .then(interaction => console.log(`${interaction.customId} was submitted!`))
+            .catch(console.error);
+
+        console.log(interaction)
         // statements
-        let statements = [...interaction.options._hoistedOptions];
-        const gameTruth = statements[0].value;
+        let statements = [
+            interaction.fields.getTextInputValue('inputLie') ?? `ERROR`,
+            interaction.fields.getTextInputValue('inputTruth1') ?? `ERROR`,
+            interaction.fields.getTextInputValue('inputTruth2') ?? `ERROR`,
+        ];
+        const gameTruth = statements[0];
         //const statement1 = interaction.options.getString('lie') ?? 'Nothing';
         //const statement2 = interaction.options.getString('truth_1') ?? 'Nothing';
         //const statement3 = interaction.options.getString('truth_2') ?? 'Nothing';
@@ -60,7 +108,7 @@ module.exports = {
             st_i++;
         }
         let timerTxt = `⏰**${timerSeconds}** seconds remaining!\n`;
-		const message = await interaction.reply({content: timerTxt+msg, fetchReply: true });
+		const message = await interaction.editReply({content: timerTxt+msg, fetchReply: true, ephemeral: false });
 
         // add reactions
         try {
